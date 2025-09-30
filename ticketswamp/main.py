@@ -109,6 +109,70 @@ print("\n=== PAGE CONTENT AFTER CAPTCHA ===")
 print(driver.page_source)
 print("=== END OF POST-CAPTCHA CONTENT ===\n")
 
+# Monitor availableTicketsCount in a loop every second
+import re
+import time
+import subprocess
+from datetime import datetime
+
+def get_ticket_count():
+    """Extract availableTicketsCount from the page"""
+    try:
+        # Method 1: Search for the JSON pattern in page source
+        page_source = driver.page_source
+        pattern = r'"availableTicketsCount":(\d+)'
+        match = re.search(pattern, page_source)
+        
+        if match:
+            return int(match.group(1)), "HTML"
+        
+        # Method 2: Try to find it in JavaScript variables
+        js_result = driver.execute_script("""
+            // Look for availableTicketsCount in various places
+            if (window.availableTicketsCount !== undefined) {
+                return window.availableTicketsCount;
+            }
+            if (window.ticketData && window.ticketData.availableTicketsCount !== undefined) {
+                return window.ticketData.availableTicketsCount;
+            }
+            if (window.eventData && window.eventData.availableTicketsCount !== undefined) {
+                return window.eventData.availableTicketsCount;
+            }
+            return null;
+        """)
+        
+        if js_result is not None:
+            return int(js_result), "JavaScript"
+            
+        return None, None
+        
+    except Exception as e:
+        return None, f"Error: {e}"
+
+print("\n🔄 Starting ticket count monitoring...")
+print("Press Ctrl+C to stop monitoring")
+print("=" * 50)
+
+try:
+    while True:
+        current_time = datetime.now().strftime("%H:%M:%S")
+        tickets_count, source = get_ticket_count()
+        
+        if tickets_count is not None:
+            if tickets_count > 0:
+                print(f"🚨 [{current_time}] 🎫 TICKETS AVAILABLE: {tickets_count} (from {source})")
+            else:
+                print(f"[{current_time}] 🎫 Available Tickets: {tickets_count} (from {source})")
+        else:
+            print(f"[{current_time}] ⚠️ Could not find ticket count ({source})")
+        
+        time.sleep(0.5)  # Wait 0.5 seconds before next check
+        
+except KeyboardInterrupt:
+    print("\n\n🛑 Monitoring stopped by user")
+except Exception as e:
+    print(f"\n❌ Error during monitoring: {e}")
+
 # Get cookies after solving
 cookies = driver.get_cookies()
 print("=== COOKIES AFTER CAPTCHA ===")
