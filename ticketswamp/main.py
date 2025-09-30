@@ -46,16 +46,18 @@ driver.execute_script("""
 """)
 driver.get("https://www.ticketswap.nl/event/stella-lowenzahnhonig/c6a4e19e-f0de-44ab-a451-9ebb8c61aa0b")
 
-# Print the HTML content of the page
-print("=== PAGE HTML CONTENT ===")
-print(driver.page_source)
-print("=== END OF HTML CONTENT ===")
-
 # Solve CAPTCHA manually
 input("Solve the CAPTCHA and press Enter...")
 
+# Print the page content after solving CAPTCHA
+print("\n=== PAGE CONTENT AFTER CAPTCHA ===")
+print(driver.page_source)
+print("=== END OF POST-CAPTCHA CONTENT ===\n")
+
 # Get cookies after solving
 cookies = driver.get_cookies()
+print("=== COOKIES AFTER CAPTCHA ===")
 print(cookies)
+print("=== END OF COOKIES ===")
 
 # Now you can use these cookies in subsequent requests
