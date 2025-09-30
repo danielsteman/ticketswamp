@@ -115,6 +115,29 @@ import time
 import subprocess
 from datetime import datetime
 
+def show_intrusive_popup(ticket_count):
+    """Show a very intrusive macOS popup notification"""
+    try:
+        # Create a very intrusive system alert
+        alert_script = f'''
+        display dialog "🚨🚨🚨 TICKETS AVAILABLE! 🚨🚨🚨
+
+{ticket_count} TICKETS FOUND ON TICKETSWAP!
+
+CLICK OK TO GO TO THE PAGE!" with title "URGENT: TICKETS AVAILABLE!" buttons {{"OK", "Cancel"}} default button "OK" with icon caution giving up after 30
+        '''
+        
+        # Execute the AppleScript
+        subprocess.run(['osascript', '-e', alert_script], check=True)
+        
+        # Also trigger a system sound
+        subprocess.run(['afplay', '/System/Library/Sounds/Sosumi.aiff'], check=False)
+        
+        print(f"🚨 INTRUSIVE POPUP SHOWN FOR {ticket_count} TICKETS!")
+        
+    except Exception as e:
+        print(f"⚠️ Error showing popup: {e}")
+
 def get_ticket_count():
     """Extract availableTicketsCount from the page"""
     try:
@@ -154,6 +177,8 @@ print("Press Ctrl+C to stop monitoring")
 print("=" * 50)
 
 try:
+    last_ticket_count = 0  # Track previous count to avoid spam
+    
     while True:
         current_time = datetime.now().strftime("%H:%M:%S")
         tickets_count, source = get_ticket_count()
@@ -161,8 +186,15 @@ try:
         if tickets_count is not None:
             if tickets_count > 0:
                 print(f"🚨 [{current_time}] 🎫 TICKETS AVAILABLE: {tickets_count} (from {source})")
+                
+                # Show intrusive popup only when tickets become available (not on every check)
+                if tickets_count > last_ticket_count:
+                    show_intrusive_popup(tickets_count)
+                
+                last_ticket_count = tickets_count
             else:
                 print(f"[{current_time}] 🎫 Available Tickets: {tickets_count} (from {source})")
+                last_ticket_count = 0  # Reset when no tickets
         else:
             print(f"[{current_time}] ⚠️ Could not find ticket count ({source})")
         
