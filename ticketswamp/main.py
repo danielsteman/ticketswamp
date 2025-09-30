@@ -49,6 +49,61 @@ driver.get("https://www.ticketswap.nl/event/stella-lowenzahnhonig/c6a4e19e-f0de-
 # Solve CAPTCHA manually
 input("Solve the CAPTCHA and press Enter...")
 
+# Try to accept cookies automatically
+try:
+    # Wait a moment for the page to load
+    import time
+    time.sleep(2)
+    
+    # Common cookie acceptance button selectors
+    cookie_selectors = [
+        "button[id*='accept']",
+        "button[class*='accept']", 
+        "button[id*='cookie']",
+        "button[class*='cookie']",
+        "button[id*='consent']",
+        "button[class*='consent']",
+        "button:contains('Accept')",
+        "button:contains('Accept All')",
+        "button:contains('I Accept')",
+        "button:contains('Agree')",
+        "button:contains('OK')",
+        "[data-testid*='accept']",
+        "[data-testid*='cookie']",
+        ".cookie-accept",
+        ".accept-cookies",
+        "#accept-cookies",
+        "#cookie-accept"
+    ]
+    
+    cookie_accepted = False
+    for selector in cookie_selectors:
+        try:
+            if selector.startswith("button:contains("):
+                # Handle text-based selectors differently
+                text = selector.split("'")[1]
+                elements = driver.find_elements("xpath", f"//button[contains(text(), '{text}')]")
+            else:
+                elements = driver.find_elements("css selector", selector)
+            
+            if elements:
+                element = elements[0]
+                if element.is_displayed() and element.is_enabled():
+                    print(f"Found cookie button with selector: {selector}")
+                    element.click()
+                    print("✅ Cookies accepted automatically!")
+                    cookie_accepted = True
+                    time.sleep(1)  # Wait for page to update
+                    break
+        except Exception as e:
+            continue
+    
+    if not cookie_accepted:
+        print("⚠️ No cookie acceptance button found automatically")
+        
+except Exception as e:
+    print(f"⚠️ Error trying to accept cookies: {e}")
+
 # Print the page content after solving CAPTCHA
 print("\n=== PAGE CONTENT AFTER CAPTCHA ===")
 print(driver.page_source)
